@@ -21,6 +21,9 @@ import java.awt.event.KeyEvent;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,11 +39,15 @@ public class ExamplePlugin extends Plugin
 	@Inject
 	private ExampleConfig config;
 
+	private int numGuesses = 0;
+	public String curWord = "";
 
 	@Override
 	protected void startUp() throws Exception
 	{
-
+		java.util.List<String> allWords = Files.readAllLines(Paths.get("C:\\Users\\DaneB\\IdeaProjects\\runelitePluginTest\\src\\main\\java\\com\\pluginTest\\wordleList.txt"));
+		String randomWord = getRandomWord(allWords);
+		curWord = randomWord;
 	}
 
 	@Override
@@ -49,12 +56,19 @@ public class ExamplePlugin extends Plugin
 
 	}
 
+	private static String getRandomWord(java.util.List<String> words) {
+		Random random = new Random();
+		int randomIndex = random.nextInt(words.size());
+		return words.get(randomIndex);
+	}
+	
 	@Subscribe
 	private void onChatMessage(ChatMessage event) {
 		String message = event.getMessage();
 
 		if (message.startsWith("!Guess")) {
 			extractGuess(message);
+			sendMessageWithColor(curWord);
 		}
 	}
 
@@ -63,9 +77,15 @@ public class ExamplePlugin extends Plugin
 		Matcher matcher = pattern.matcher(message);
 
 		if (matcher.matches()) {
-			String guess = matcher.group(1);
+			if (numGuesses > 3) {
+				sendMessageWithColor("You've lost! Sorry!");
+				numGuesses = 0;
+			} else {
+				String guess = matcher.group(1);
 
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", guess, null);
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", guess, null);
+				numGuesses++;
+			}
 		}
 	}
 
