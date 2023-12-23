@@ -23,6 +23,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,13 +42,15 @@ public class ExamplePlugin extends Plugin
 
 	private int numGuesses = 0;
 	public String curWord = "";
+	public char[] chosenWordArray = {};
 
 	@Override
 	protected void startUp() throws Exception
 	{
 		java.util.List<String> allWords = Files.readAllLines(Paths.get("C:\\Users\\DaneB\\IdeaProjects\\runelitePluginTest\\src\\main\\java\\com\\pluginTest\\wordleList.txt"));
 		String randomWord = getRandomWord(allWords);
-		curWord = randomWord;
+		curWord = randomWord.toUpperCase();
+		chosenWordArray = curWord.toCharArray();
 	}
 
 	@Override
@@ -68,7 +71,6 @@ public class ExamplePlugin extends Plugin
 
 		if (message.startsWith("!Guess")) {
 			extractGuess(message);
-			sendMessageWithColor(curWord);
 		}
 	}
 
@@ -78,13 +80,53 @@ public class ExamplePlugin extends Plugin
 
 		if (matcher.matches()) {
 			if (numGuesses > 3) {
-				sendMessageWithColor("You've lost! Sorry!");
+				sendRedMessage("You've lost! Sorry!");
 				numGuesses = 0;
 			} else {
-				String guess = matcher.group(1);
+				String guess = matcher.group(1).toUpperCase();
+				char[] curGuess = guess.toCharArray();
 
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", guess, null);
-				numGuesses++;
+				if (curGuess.length != 5) {
+					sendRedMessage("Your guess must be 5 letters long. Please try again.");
+				} else {
+					//TODO:
+					//handle the duplicate scenario
+					//example: WORD=LAYER, GUESS=LAYEE
+					//the second E should be red since we only have 1 E in the word LAYER
+
+
+					//TODO:
+					//When the user gets the word, the game is over lol
+
+
+					ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder();
+					int found = 0;
+					for (int i = 0; i < 5; i++) {
+						for (int j = 0; j < 5; j++) {
+							if (curGuess[i] == chosenWordArray[j]) {
+								if (i == j) {
+									//print curGuess[i] green
+									chatMessageBuilder.append(Color.GREEN, String.valueOf(curGuess[i]) + " ");
+									found++;
+									j = 5;
+								} else {
+									//print curGuess[i] as yellow
+									chatMessageBuilder.append(Color.YELLOW, String.valueOf(curGuess[i]) + " ");
+									found++;
+									j = 5;
+								}
+							}
+						}
+						if (found == 0) {
+							chatMessageBuilder.append(Color.RED, String.valueOf(curGuess[i]) + " ");
+						}
+
+						found = 0;
+					}
+
+					client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", chatMessageBuilder.build(), null);
+					numGuesses++;
+				}
 			}
 		}
 	}
@@ -97,12 +139,27 @@ public class ExamplePlugin extends Plugin
 		{
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Welcome to Wordle!", null);
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Please enter a 5 letter word!", null);
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", curWord, null);
 		}
 	}
 
-	private void sendMessageWithColor(String message) {
+	private void sendRedMessage(String message) {
 		ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder()
 				.append(Color.RED, message); //Set the color for the rest of the message
+
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", chatMessageBuilder.build(), null);
+	}
+
+	private void sendYellowMessage(String message) {
+		ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder()
+				.append(Color.YELLOW, message); //Set the color for the rest of the message
+
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", chatMessageBuilder.build(), null);
+	}
+
+	private void sendGreenMessage(String message) {
+		ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder()
+				.append(Color.GREEN, message); //Set the color for the rest of the message
 
 		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", chatMessageBuilder.build(), null);
 	}
