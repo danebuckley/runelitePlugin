@@ -103,20 +103,21 @@ public class ExamplePlugin extends Plugin
 					//TODO:
 					//handle the duplicate scenario
 					//example: WORD=LAYER, GUESS=LAYEE
-					//example: WORD=FILLY, GUESS=FILLY ->DOES NOT WIN GAME
+					//example: WORD=FILLY, GUESS=FILLY ->DOES NOT WIN GAME (THE L'S ARE COLLIDING)
 					//the second E should be red since we only have 1 E in the word LAYER
 
 					ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder();
 					int found = 0;
-
+					int curJ = 0;
 					for (int i = 0; i < 5; i++) {
-						for (int j = 0; j < 5; j++) {
+						for (int j = curJ; j < 5; j++) {
 							if (curGuess[i] == chosenWordArray[j]) {
 								if (i == j) {
 									//print curGuess[i] green
 									chatMessageBuilder.append(Color.GREEN, String.valueOf(curGuess[i]) + " ");
 									found++;
 									winCondition++;
+									curJ++;
 									j = 5;
 								} else {
 									//print curGuess[i] as yellow
@@ -140,9 +141,11 @@ public class ExamplePlugin extends Plugin
 						//reset the game here
 						winCondition = 0;
 						numGuesses = 0;
+						curJ = 0;
 						pickRandomWord();
 					} else {
 						numGuesses++;
+						curJ = 0;
 					}
 				}
 			}
