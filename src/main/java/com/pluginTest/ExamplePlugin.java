@@ -21,6 +21,7 @@ import java.awt.event.KeyEvent;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -44,19 +45,27 @@ public class ExamplePlugin extends Plugin
 	public String curWord = "";
 	public char[] chosenWordArray = {};
 
+	int winCondition = 0;
+
 	@Override
 	protected void startUp() throws Exception
 	{
-		java.util.List<String> allWords = Files.readAllLines(Paths.get("C:\\Users\\DaneB\\IdeaProjects\\runelitePluginTest\\src\\main\\java\\com\\pluginTest\\wordleList.txt"));
-		String randomWord = getRandomWord(allWords);
-		curWord = randomWord.toUpperCase();
-		chosenWordArray = curWord.toCharArray();
+		pickRandomWord();
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
 
+	}
+
+	private void pickRandomWord() throws IOException {
+		//TODO: ADD A BUNCH OF OSRS WORDS TO THE TEXT FILE, WOULD BE FUN TO HAVE A MORE CUSTOM DOCUMENT
+
+		java.util.List<String> allWords = Files.readAllLines(Paths.get("C:\\Users\\DaneB\\IdeaProjects\\runelitePluginTest\\src\\main\\java\\com\\pluginTest\\wordleList.txt"));
+		String randomWord = getRandomWord(allWords);
+		curWord = randomWord.toUpperCase();
+		chosenWordArray = curWord.toCharArray();
 	}
 
 	private static String getRandomWord(java.util.List<String> words) {
@@ -66,7 +75,7 @@ public class ExamplePlugin extends Plugin
 	}
 	
 	@Subscribe
-	private void onChatMessage(ChatMessage event) {
+	private void onChatMessage(ChatMessage event) throws IOException {
 		String message = event.getMessage();
 
 		if (message.startsWith("!Guess")) {
@@ -74,13 +83,15 @@ public class ExamplePlugin extends Plugin
 		}
 	}
 
-	private void extractGuess(String message) {
+	private void extractGuess(String message) throws IOException {
 		Pattern pattern = Pattern.compile("!Guess\\s+(\\w+)");
 		Matcher matcher = pattern.matcher(message);
 
 		if (matcher.matches()) {
-			if (numGuesses > 3) {
+			if (numGuesses > 3) { //I have no idea why this is 3, but it works.
 				sendRedMessage("You've lost! Sorry!");
+				sendYellowMessage("The word was " + curWord);
+				pickRandomWord();
 				numGuesses = 0;
 			} else {
 				String guess = matcher.group(1).toUpperCase();
@@ -92,15 +103,12 @@ public class ExamplePlugin extends Plugin
 					//TODO:
 					//handle the duplicate scenario
 					//example: WORD=LAYER, GUESS=LAYEE
+					//example: WORD=FILLY, GUESS=FILLY ->DOES NOT WIN GAME
 					//the second E should be red since we only have 1 E in the word LAYER
-
-
-					//TODO:
-					//When the user gets the word, the game is over lol
-
 
 					ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder();
 					int found = 0;
+
 					for (int i = 0; i < 5; i++) {
 						for (int j = 0; j < 5; j++) {
 							if (curGuess[i] == chosenWordArray[j]) {
@@ -108,6 +116,7 @@ public class ExamplePlugin extends Plugin
 									//print curGuess[i] green
 									chatMessageBuilder.append(Color.GREEN, String.valueOf(curGuess[i]) + " ");
 									found++;
+									winCondition++;
 									j = 5;
 								} else {
 									//print curGuess[i] as yellow
@@ -125,7 +134,16 @@ public class ExamplePlugin extends Plugin
 					}
 
 					client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", chatMessageBuilder.build(), null);
-					numGuesses++;
+
+					if (winCondition == 5) {
+						sendGreenMessage("Congratulations, you have completed today's OSRS Wordle!");
+						//reset the game here
+						winCondition = 0;
+						numGuesses = 0;
+						pickRandomWord();
+					} else {
+						numGuesses++;
+					}
 				}
 			}
 		}
