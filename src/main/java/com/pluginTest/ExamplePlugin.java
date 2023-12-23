@@ -102,9 +102,8 @@ public class ExamplePlugin extends Plugin
 				} else {
 					//TODO:
 					//handle the duplicate scenario
-					//example: WORD=LAYER, GUESS=LAYEE
-					//example: WORD=FILLY, GUESS=FILLY ->DOES NOT WIN GAME (THE L'S ARE COLLIDING)
-					//the second E should be red since we only have 1 E in the word LAYER
+					//example: TWINE -> TWEEN (MAKES TWO YELLOW E'S EVEN THOUGH IT ONLY NEEDS ONE)
+
 
 					ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder();
 					int found = 0;
@@ -145,6 +144,7 @@ public class ExamplePlugin extends Plugin
 						pickRandomWord();
 					} else {
 						numGuesses++;
+						winCondition = 0;
 						curJ = 0;
 					}
 				}
